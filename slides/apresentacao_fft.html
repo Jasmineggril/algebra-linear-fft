@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Álgebra Linear da FFT - Apresentação de Seminário</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- MathJax for rendering LaTeX formulas -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700;800&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #f3f4f6;
+    }
+    
+    code, pre {
+      font-family: 'Fira Code', monospace;
+    }
+
+    .slide {
+      display: none;
+      min-height: calc(100vh - 120px);
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Navigation & Presentation Header -->
+  <header class="border-b border-gray-800/80 bg-gray-950/70 backdrop-blur-md px-6 py-3 sticky top-0 z-50 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+      <h1 class="text-sm font-semibold tracking-wide text-gray-200">
+        Álgebra Linear da FFT <span class="text-gray-500 font-normal">| Seminário de Graduação</span>
+      </h1>
+    </div>
+
+    <!-- Speaker Badge & Slide Counter -->
+    <div class="flex items-center gap-4">
+      <div id="speakerBadge" class="text-xs px-3 py-1 rounded-full font-medium border bg-indigo-950/50 border-indigo-500/40 text-indigo-300">
+        Responsável: Estevão
+      </div>
+      <div class="text-xs text-gray-400 font-mono bg-gray-900 border border-gray-800 px-2.5 py-1 rounded">
+        Slide <span id="currentSlideNum" class="text-white font-bold">1</span> / <span id="totalSlidesNum">17</span>
+      </div>
+      <button id="toggleNotesBtn" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded border border-gray-700 transition">
+        Roteiro de Fala (Espelho)
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Slide Presentation Canvas -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-6 flex flex-col justify-center">
+
+    <!-- SLIDE 1: Capa -->
+    <div class="slide active" data-slide="1" data-speaker="Estevão">
+      <div class="my-auto text-center max-w-4xl mx-auto space-y-6">
+        <div class="inline-block bg-indigo-950/60 border border-indigo-500/40 text-indigo-400 text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-wider">
+          Departamento de Matemática • Álgebra Linear
+        </div>
+        <h1 class="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-500 tracking-tight">
+          Álgebra Linear da Transformada Rápida de Fourier (FFT)
+        </h1>
+        <p class="text-lg md:text-xl text-gray-400 font-light">
+          Formulação Matricial, Fatoração Esparsa e Aplicações em Processamento de Sinais, Imagens e Vídeo
+        </p>
+
+        <div class="p-6 bg-gray-900/60 border border-gray-800 rounded-2xl max-w-2xl mx-auto backdrop-blur-sm shadow-xl">
+          <div class="text-base text-indigo-200 font-mono">
+            $$\hat{x} = F_N x \quad \Longleftrightarrow \quad \mathcal{O}(N^2) \xrightarrow{\text{Cooley-Tukey}} \mathcal{O}(N \log_2 N)$$
+          </div>
+        </div>
+
+        <div class="pt-4 flex justify-center items-center gap-6 text-sm text-gray-300">
+          <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Estevão</span>
+          <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Francisco</span>
+          <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-purple-500"></span> Jasmine</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Sinais como Vetores -->
+    <div class="slide" data-slide="2" data-speaker="Estevão">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Fundamentos Algébricos</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Sinais como Vetores em $\mathbb{C}^N$ e Mudança de Base</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4 text-gray-300 text-sm leading-relaxed">
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white mb-2 flex items-center gap-2">
+                <span class="text-indigo-400 font-mono">01.</span> A Base Canônica (Domínio do Tempo)
+              </h3>
+              <p>O vetor de estado $x$ armazena amostras pontuais. Cada componente $x_n$ indica a amplitude pontual no instante $n$. Essa base padrão é pontual e "cega" para periodicidades globais.</p>
+            </div>
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white mb-2 flex items-center gap-2">
+                <span class="text-indigo-400 font-mono">02.</span> A Base de Fourier (Domínio da Frequência)
+              </h3>
+              <p>Projeção isomórfica em novos eixos ortogonais $\{v_k\}$, onde cada vetor de base representa uma onda senoidal periódica pura de frequência angular específica.</p>
+            </div>
+          </div>
+
+          <div class="p-6 bg-gray-900/50 border border-gray-800 rounded-2xl flex flex-col justify-center items-center">
+            <div class="text-base text-gray-200 font-mono space-y-4">
+              $$x = \begin{bmatrix} x_0 \\ x_1 \\ \vdots \\ x_{N-1} \end{bmatrix} \in \mathbb{C}^N, \quad x = \sum_{k=0}^{N-1} c_k v_k$$
+              $$\text{Transformação Linear: } T: \mathbb{C}^N \to \mathbb{C}^N$$
+            </div>
+            <div class="mt-6 text-xs text-gray-400 text-center">
+              Transição isométrica entre eixos canônicos locais e eixos harmônicos globais sem perda de energia.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Raízes da Unidade e Ortogonalidade -->
+    <div class="slide" data-slide="3" data-speaker="Estevão">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Geometria Complexa</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Raízes da Unidade e Ortogonalidade no Produto Interno</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="p-5 bg-gray-900/70 border border-gray-800 rounded-xl flex flex-col justify-between">
+            <h3 class="font-semibold text-indigo-300 text-sm">A Raiz Primitiva da Unidade</h3>
+            <div class="my-3 font-mono text-sm text-gray-200">
+              $$\omega_N = e^{-i \frac{2\pi}{N}}$$
+              $$\omega_N = \cos\left(\frac{2\pi}{N}\right) - i\sin\left(\frac{2\pi}{N}\right)$$
+            </div>
+            <p class="text-xs text-gray-400">Particiona a circunferência de raio unitário no plano de Argand-Gauss em $N$ arcos idênticos.</p>
+          </div>
+
+          <div class="p-5 bg-gray-900/70 border border-gray-800 rounded-xl flex flex-col justify-between">
+            <h3 class="font-semibold text-indigo-300 text-sm">Vetores da Base de Fourier</h3>
+            <div class="my-3 font-mono text-sm text-gray-200">
+              $$v_k = \begin{bmatrix} 1 \\ \omega_N^k \\ \omega_N^{2k} \\ \vdots \\ \omega_N^{(N-1)k} \end{bmatrix}$$
+            </div>
+            <p class="text-xs text-gray-400">Progressão geométrica contínua das potências de rotação no círculo complexo.</p>
+          </div>
+
+          <div class="p-5 bg-gray-900/70 border border-gray-800 rounded-xl flex flex-col justify-between">
+            <h3 class="font-semibold text-emerald-300 text-sm">Teorema da Ortogonalidade</h3>
+            <div class="my-3 font-mono text-sm text-gray-200">
+              $$\langle v_k, v_l \rangle = \begin{cases} N, & k = l \\ 0, & k \neq l \end{cases}$$
+            </div>
+            <p class="text-xs text-gray-400">Para $k \neq l$, os afixos formam polígonos regulares centrados na origem, somando zero absoluto.</p>
+          </div>
+        </div>
+
+        <div class="p-4 bg-gray-950 border border-gray-800 rounded-xl text-center text-sm font-mono text-indigo-200">
+          $$\sum_{n=0}^{N-1} (\omega_N^{(k-l)})^n = \frac{1 - (\omega_N^{k-l})^N}{1 - \omega_N^{k-l}} = \frac{1 - e^{-i 2\pi(k-l)}}{1 - \omega_N^{k-l}} = 0 \quad (\forall k \neq l)$$
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: Matriz de Fourier (F_N) -->
+    <div class="slide" data-slide="4" data-speaker="Estevão">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Formulação Matricial</span>
+          <h2 class="text-3xl font-bold text-white mt-1">A Matriz de Fourier ($F_N$) como Matriz de Vandermonde</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4">
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl text-sm text-gray-300">
+              <span class="font-semibold text-white">Operador Linear Direto:</span>
+              <p class="mt-1">A Transformada Discreta de Fourier não exige limites nem integrais: resume-se ao produto matriz-vetor $X = F_N x$.</p>
+            </div>
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl text-sm text-gray-300">
+              <span class="font-semibold text-white">Estrutura Simétrica:</span>
+              <p class="mt-1">Cada entrada é dada estritamente por $[F_N]_{k,n} = \omega_N^{k \cdot n}$. É uma matriz de Vandermonde simétrica ($F_N = F_N^T$).</p>
+            </div>
+          </div>
+
+          <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl">
+            <div class="text-xs font-mono text-indigo-300 overflow-x-auto">
+              $$F_N = \begin{bmatrix}
+              1 & 1 & 1 & \dots & 1 \\
+              1 & \omega_N & \omega_N^2 & \dots & \omega_N^{N-1} \\
+              1 & \omega_N^2 & \omega_N^4 & \dots & \omega_N^{2(N-1)} \\
+              \vdots & \vdots & \vdots & \ddots & \vdots \\
+              1 & \omega_N^{N-1} & \omega_N^{2(N-1)} & \dots & \omega_N^{(N-1)(N-1)}
+              \end{bmatrix}$$
+            </div>
+            <div class="mt-4 p-3 bg-gray-900/90 rounded-lg text-xs font-mono text-center text-emerald-400">
+              Exemplo $N=4$ ($\omega_4 = -i$): 
+              <br>$F_4 = \begin{bmatrix} 1 & 1 & 1 & 1 \\ 1 & -i & -1 & i \\ 1 & -1 & 1 & -1 \\ 1 & i & -1 & -i \end{bmatrix}$
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Unitariedade e Gargalo O(N^2) -->
+    <div class="slide" data-slide="5" data-speaker="Estevão">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Propriedades & Limitações</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Unitariedade, Isometria e o Gargalo Computacional $\mathcal{O}(N^2)$</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-5 bg-gray-900/80 border border-gray-800 rounded-2xl space-y-3">
+            <h3 class="text-emerald-400 font-semibold text-sm">Propriedades Notáveis</h3>
+            <ul class="text-xs text-gray-300 space-y-2 leading-relaxed">
+              <li>• <strong>Relação de Ortogonalidade:</strong> $F_N^* F_N = N \cdot I_N$.</li>
+              <li>• <strong>Operador Unitário:</strong> $\mathcal{U}_N = \frac{1}{\sqrt{N}} F_N \implies \mathcal{U}_N^* \mathcal{U}_N = I_N$.</li>
+              <li>• <strong>Conservação de Energia (Parseval):</strong> $\|\hat{x}\|_2 = \sqrt{N} \|x\|_2$.</li>
+              <li>• <strong>Inversa Trivial:</strong> $F_N^{-1} = \frac{1}{N} F_N^* = \frac{1}{N} \overline{F_N}$.</li>
+            </ul>
+          </div>
+
+          <div class="p-5 bg-red-950/20 border border-red-900/40 rounded-2xl space-y-3">
+            <h3 class="text-red-400 font-semibold text-sm">O Gargalo Computacional $\mathcal{O}(N^2)$</h3>
+            <p class="text-xs text-gray-300">Para avaliar $X = F_N x$ diretamente, cada uma das $N$ linhas exige $N$ produtos complexos:</p>
+            <div class="p-3 bg-gray-950 rounded-lg text-center font-mono text-red-300 text-sm">
+              $$\text{Operações Aritméticas} = N^2$$
+            </div>
+            <p class="text-xs text-gray-400">
+              Para um sinal de áudio de 1 minuto ($N \approx 2{,}6 \times 10^6$), teríamos $\approx 7 \times 10^{12}$ operações. Inviável em tempo real sem uma fatoração inteligente!
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: A Sacada de Cooley-Tukey -->
+    <div class="slide" data-slide="6" data-speaker="Francisco">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">O Algoritmo FFT</span>
+          <h2 class="text-3xl font-bold text-white mt-1">A Sacada de Cooley-Tukey (1965) — Dividir para Conquistar</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4 text-sm text-gray-300">
+            <div class="p-4 bg-gray-900/70 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white mb-1">Partição Par / Ímpar</h3>
+              <p>Divide-se o vetor original de dimensão $N$ em dois subvetores contíguos de dimensão $N/2$:</p>
+              <div class="font-mono text-xs text-indigo-300 mt-2">
+                $x_{\text{par}} = [x_0, x_2, \dots, x_{N-2}]^T$ <br>
+                $x_{\text{ímpar}} = [x_1, x_3, \dots, x_{N-1}]^T$
+              </div>
+            </div>
+            <div class="p-4 bg-gray-900/70 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white mb-1">Periodicidade das Raízes</h3>
+              <p>Como $\omega_N^2 = \omega_{N/2}$, a somatória original se decompõe no acoplamento exato de duas DFTs menores.</p>
+            </div>
+          </div>
+
+          <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl font-mono text-sm text-center space-y-4">
+            <div class="text-indigo-200">
+              $$X_k = \sum_{m=0}^{N/2-1} x_{2m} \omega_N^{2mk} + \omega_N^k \sum_{m=0}^{N/2-1} x_{2m+1} \omega_N^{2mk}$$
+            </div>
+            <div class="p-3 bg-gray-900 rounded-lg text-emerald-400 text-xs">
+              $$X_k = \text{DFT}_{N/2}[x_{\text{par}}]_k + \omega_N^k \cdot \text{DFT}_{N/2}[x_{\text{ímpar}}]_k$$
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: Fatoração Matricial em Blocos Esparsos -->
+    <div class="slide" data-slide="7" data-speaker="Francisco">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">O Ponto Culminante Teórico</span>
+          <h2 class="text-3xl font-bold text-white mt-1">A Fatoração de $F_N$ em Matrizes Esparsas por Blocos</h2>
+        </div>
+
+        <div class="p-6 bg-gray-950 border border-indigo-500/30 rounded-2xl text-center shadow-lg">
+          <div class="text-lg md:text-xl font-mono text-indigo-300">
+            $$F_N = \begin{bmatrix} I_{N/2} & \Omega_{N/2} \\ I_{N/2} & -\Omega_{N/2} \end{bmatrix} \begin{bmatrix} F_{N/2} & 0 \\ 0 & F_{N/2} \end{bmatrix} P_N$$
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <h4 class="font-bold text-white uppercase tracking-wider text-[11px] text-blue-400">1. Permutação ($P_N$)</h4>
+            <p class="text-gray-300">Matriz ortogonal de permutação ($P_N^T P_N = I$). Reordena o vetor separando pares no topo e ímpares na base. Custo de computação: <strong>zero</strong> (endereçamento de memória).</p>
+          </div>
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <h4 class="font-bold text-white uppercase tracking-wider text-[11px] text-indigo-400">2. Blocos ($F_{N/2}$)</h4>
+            <p class="text-gray-300">Matriz diagonal em blocos. Aplica paralelamente duas DFTs de ordem $N/2$ desacopladas entre si.</p>
+          </div>
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <h4 class="font-bold text-white uppercase tracking-wider text-[11px] text-purple-400">3. Rotação ($\Omega_{N/2}$)</h4>
+            <p class="text-gray-300">Matriz diagonal com os fatores de rotação (*twiddle factors*): $\Omega_{N/2} = \text{diag}(1, \omega_N^1, \dots, \omega_N^{N/2-1})$. Custo de produto escalar mínimo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: Grafo de Borboleta e Bit-Reversal -->
+    <div class="slide" data-slide="8" data-speaker="Francisco">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Topologia Algébrica</span>
+          <h2 class="text-3xl font-bold text-white mt-1">O Grafo de Borboleta (*Butterfly Graph*) e *Bit-Reversal*</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4 text-xs text-gray-300">
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-2">Operação de Borboleta (Radix-2)</h3>
+              <div class="font-mono text-indigo-300 text-sm p-3 bg-gray-950 rounded-lg">
+                $$\begin{cases} y_k = u_k + \omega_N^k v_k \\ y_{k + N/2} = u_k - \omega_N^k v_k \end{cases}$$
+              </div>
+              <p class="mt-2">Recombinação local que consome apenas uma multiplicação complexa por par!</p>
+            </div>
+
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-2">Permutação por Reversão de Bits</h3>
+              <p>Ao desdobrar toda a recursão, os índices sofrem espelhamento binário:</p>
+              <p class="font-mono text-emerald-400 mt-1">Ex ($N=8$): $1 = 001_2 \xrightarrow{\text{inversão}} 100_2 = 4$</p>
+              <p class="mt-1 text-gray-400">Permite computar a FFT <em>in-place</em> sem consumo extra de memória RAM.</p>
+            </div>
+          </div>
+
+          <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl flex flex-col justify-center items-center">
+            <div class="font-mono text-center text-xs text-indigo-200">
+              $$F_N = \prod_{s=1}^{\log_2 N} B_s \cdot P_N$$
+              <span class="text-gray-400 block mt-2 text-[11px]">Cada estágio $B_s$ tem no máximo 2 elementos não nulos por linha.</span>
+            </div>
+            <div class="mt-6 w-full p-4 bg-gray-900 border border-gray-800 rounded-xl text-center">
+              <span class="text-xs text-indigo-400 font-semibold block mb-1">Total de Estágios:</span>
+              <span class="text-2xl font-extrabold text-white font-mono">$\log_2 N$</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: Complexidade e Benchmark -->
+    <div class="slide" data-slide="9" data-speaker="Francisco">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Benchmark Numérico</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Complexidade Assintótica e Benchmark Experimental</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="p-5 bg-gray-900/80 border border-gray-800 rounded-2xl space-y-3">
+            <h3 class="font-semibold text-white text-sm">Dedução pelo Teorema Mestre</h3>
+            <div class="font-mono text-indigo-300 text-xs p-3 bg-gray-950 rounded-lg">
+              $$T(N) = 2T(N/2) + \mathcal{O}(N)$$
+              $$\implies T(N) = \mathcal{O}(N \log_2 N)$$
+            </div>
+            <p class="text-xs text-gray-400">Multiplicações caem de $N^2$ para $\frac{N}{2}\log_2 N$.</p>
+          </div>
+
+          <div class="p-5 bg-gray-900/80 border border-gray-800 rounded-2xl space-y-3">
+            <h3 class="font-semibold text-emerald-400 text-sm">Aceleração Relativa</h3>
+            <div class="font-mono text-emerald-300 text-xs p-3 bg-gray-950 rounded-lg">
+              $$\text{Speedup} \approx \frac{2N}{\log_2 N}$$
+            </div>
+            <ul class="text-xs text-gray-300 space-y-1">
+              <li>• Para $N = 1024$: $\approx 204\times$ mais rápida.</li>
+              <li>• Para $N = 10^6$: $\approx 100.000\times$ mais rápida.</li>
+            </ul>
+          </div>
+
+          <div class="p-5 bg-gray-900/80 border border-gray-800 rounded-2xl space-y-3">
+            <h3 class="font-semibold text-blue-400 text-sm">Script `01_dft_vs_fft.py`</h3>
+            <p class="text-xs text-gray-300">Medições reais do nosso repositório:</p>
+            <div class="text-xs text-gray-400 bg-gray-950 p-2 rounded font-mono">
+              $N=2048$:<br>
+              • DFT: 0.12 s (curva quadrática)<br>
+              • FFT: 0.0008 s (reta plana)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 10: Áudio e Sinais 1D -->
+    <div class="slide" data-slide="10" data-speaker="Jasmine">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Aplicações Computacionais</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Aplicação 1 — Áudio e Processamento de Sinais 1D</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4 text-xs text-gray-300 leading-relaxed">
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-1">Amostragem via Nyquist-Shannon</h3>
+              <p>A pressão sonora contínua é amostrada temporalmente a $f_s = 44.100\text{ Hz}$. Cada segundo de gravação gera $44.100$ pontos reais no vetor $x \in \mathbb{R}^N$.</p>
+            </div>
+
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-1">Resolução Espectral</h3>
+              <p>Ao projetar via FFT, cada bin espectral $k$ mapeia diretamente para a frequência analógica:</p>
+              <p class="font-mono text-purple-300 mt-1">$$f_k = \frac{k \cdot f_s}{N} \quad \left(0 \leq k < \frac{N}{2}\right)$$</p>
+            </div>
+          </div>
+
+          <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl flex flex-col justify-center items-center text-center">
+            <div class="text-xs font-mono text-gray-400 mb-2">Janelamento & Espectrograma (STFT)</div>
+            <div class="p-4 bg-gray-900 rounded-xl border border-gray-800 w-full text-xs text-gray-300 space-y-2">
+              <p class="text-indigo-400 font-semibold">Short-Time Fourier Transform</p>
+              <p>Particionamento do sinal em blocos de $N=1024$ ou $2048$ pontos para gerar mapas dinâmicos de tempo-frequência em milissegundos.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 11: Filtragem Espectral de Áudio -->
+    <div class="slide" data-slide="11" data-speaker="Jasmine">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Demonstração Experimental</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Demonstração de Filtragem Espectral de Áudio (`02_audio_filtering.py`)</h2>
+        </div>
+
+        <div class="p-4 bg-gray-950 border border-gray-800 rounded-xl text-center font-mono text-xs text-indigo-300">
+          $$\text{Sinal Poluído } x \xrightarrow{\text{FFT}} X \xrightarrow{\cdot H} X_{\text{filtrado}} \xrightarrow{\text{IFFT}} x_{\text{recuperado}} = \frac{1}{N} F_N^* \Big( H \cdot (F_N x) \Big)$$
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <span class="text-red-400 font-bold">1. Domínio do Tempo</span>
+            <p class="text-gray-300">Nota Lá pura ($440\text{ Hz}$) somada a uma contaminação severa de apito em alta frequência ($4000\text{ Hz}$). Sinal poluído e deformado.</p>
+          </div>
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <span class="text-purple-400 font-bold">2. Domínio da FFT</span>
+            <p class="text-gray-300">O sinal caótico se decompõe em dois picos ortogonais limpos: um em $440\text{ Hz}$ e outro em $4000\text{ Hz}$. Aplica-se matriz diagonal passa-baixa ($H_{kk}=0$ acima de $1000\text{ Hz}$).</p>
+          </div>
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <span class="text-emerald-400 font-bold">3. Reconstrução IFFT</span>
+            <p class="text-gray-300">Multiplicação por $F_N^*/N$ sintetiza novamente o sinal puro no tempo com restauração perfeita da forma de onda original.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 12: 2D-FFT em Imagens -->
+    <div class="slide" data-slide="12" data-speaker="Jasmine">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Extensão Matricial</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Aplicação 2 — A Transformada Bidimensional (2D-FFT) em Imagens</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-3 text-xs text-gray-300">
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-1">A Imagem como Matriz Real</h3>
+              <p>Uma imagem em tons de cinza é uma matriz de intensidades de luminosidade $A \in \mathbb{R}^{M \times N}$.</p>
+            </div>
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-1">Princípio da Separabilidade</h3>
+              <p>A 2D-FFT não requer matrizes quadridimensionais: aplica-se a FFT 1D nas linhas e, no resultado, a FFT 1D nas colunas.</p>
+            </div>
+          </div>
+
+          <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl text-center space-y-3">
+            <div class="font-mono text-sm text-indigo-300">
+              $$\hat{A} = F_M \cdot A \cdot F_N^T$$
+            </div>
+            <div class="text-xs font-mono text-gray-400">
+              $$\text{Complexidade: } \mathcal{O}(MN \log_2(MN))$$
+            </div>
+            <div class="p-3 bg-gray-900 rounded-lg text-xs text-left text-gray-300">
+              • <strong>Baixas Frequências:</strong> Variações lentas de luz e planos de fundo.<br>
+              • <strong>Altas Frequências:</strong> Bordas bruscas, texturas finas e ruídos espaciais.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 13: Filtragem Espacial e Compressão -->
+    <div class="slide" data-slide="13" data-speaker="Jasmine">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Processamento Visual</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Filtragem Espacial e Compressão de Imagens (`03_image_2dfft.py`)</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-3 text-xs text-gray-300">
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-1">Centralização Espectral (`fftshift`)</h3>
+              <p>Desloca o harmônico zero (frequência média DC) para o centro geométrico $(\frac{M}{2}, \frac{N}{2})$ da matriz espectral.</p>
+            </div>
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-1">Máscara Circular Passa-Baixa</h3>
+              <p>Mantém coeficientes com raio euclidiano menor que $R$ e anula o restante:</p>
+              <p class="font-mono text-purple-300 mt-1">$$M_{u,v} = 1 \iff (u - u_0)^2 + (v - v_0)^2 \leq R^2$$</p>
+            </div>
+          </div>
+
+          <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl text-xs space-y-3">
+            <div class="font-bold text-emerald-400 text-sm">O Princípio da Compressão de Imagens</div>
+            <p class="text-gray-300">
+              Na maioria das imagens do mundo real, mais de $90\%$ da energia total está confinada nos coeficientes centrais de baixa frequência.
+            </p>
+            <div class="p-3 bg-gray-900 rounded-lg text-gray-400 font-mono text-[11px]">
+              Zerar os $90\%$ dos coeficientes de menor energia permite descartar dados na transmissão sem perda perceptível à visão humana.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 14: Compressão de Vídeo -->
+    <div class="slide" data-slide="14" data-speaker="Jasmine">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Aplicações Avançadas</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Aplicação 3 — Compressão de Vídeo e Estimativa de Movimento</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4 text-xs text-gray-300">
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-1">Vídeo como Tensor 3D</h3>
+              <p>Sequência de matrizes temporais $A_t$. Transmitir $30$ quadros 4K/s sem compressão exigiria conexões de dezenas de Gigabits por segundo.</p>
+            </div>
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
+              <h3 class="font-semibold text-white text-sm mb-1">A DCT e Codecs Modernos</h3>
+              <p>Padrões como JPEG, MPEG e H.264 empregam a Transformada Discreta de Cosseno (versão estritamente real da FFT) em blocos $8 \times 8$.</p>
+            </div>
+          </div>
+
+          <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl space-y-3">
+            <div class="font-bold text-indigo-300 text-sm">Correlação Cruzada Rápida via FFT</div>
+            <p class="text-xs text-gray-300">Para encontrar vetores de movimento entre quadros consecutivos:</p>
+            <div class="p-3 bg-gray-900 rounded-lg font-mono text-center text-xs text-purple-300">
+              $$f \star g = \text{IFFT}\Big( \text{FFT}(f)^* \odot \text{FFT}(g) \Big)$$
+            </div>
+            <p class="text-[11px] text-emerald-400 text-center font-mono">
+              Complexidade Espacial $\mathcal{O}(N^2) \xrightarrow{\text{FFT}} \mathcal{O}(N \log N)$
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 15: Síntese e Impacto Global -->
+    <div class="slide" data-slide="15" data-speaker="Grupo (Todos)">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Visão Holística</span>
+          <h2 class="text-3xl font-bold text-white mt-1">Síntese e Impacto Global da FFT no Mundo Moderno</h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <div class="text-blue-400 font-bold text-sm">Telecomunicações</div>
+            <p class="text-gray-300">Modulação OFDM em 4G, 5G e Wi-Fi 6. Milhões de FFTs e IFFTs executadas por segundo no silício dos celulares.</p>
+          </div>
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <div class="text-purple-400 font-bold text-sm">Medicina Diagnóstica</div>
+            <p class="text-gray-300">Ressonância Magnética (MRI). Os scanners adquirem os ecos atômicos no "espaço k" (domínio espectral de Fourier).</p>
+          </div>
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <div class="text-indigo-400 font-bold text-sm">Mídia Digital</div>
+            <p class="text-gray-300">Formatos MP3, AAC, JPEG e codecs de streaming de vídeo (YouTube, Netflix) dependem da projeção em frequências.</p>
+          </div>
+          <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-2">
+            <div class="text-emerald-400 font-bold text-sm">Computação Científica</div>
+            <p class="text-gray-300">Resolução ultrarrápida de Equações Diferenciais Parciais (EDPs) e multiplicação de polinômios de grau gigantesco.</p>
+          </div>
+        </div>
+
+        <div class="p-4 bg-gray-950 border border-gray-800 rounded-xl text-center text-xs text-gray-400">
+          Classificado pelo IEEE e AIP como um dos 10 algoritmos de maior impacto técnico e científico de todo o Século XX.
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 16: Repositório e Reprodutibilidade -->
+    <div class="slide" data-slide="16" data-speaker="Jasmine">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Entrega Prática</span>
+          <h2 class="text-3xl font-bold text-white mt-1">O Repositório do Projeto e Reprodutibilidade</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-3 text-xs">
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-1">
+              <span class="text-indigo-400 font-mono font-bold">01_dft_vs_fft.py</span>
+              <p class="text-gray-300">Matriz $F_N$ pura, algoritmo de Cooley-Tukey recursivo e rotina de benchmark experimental de tempo.</p>
+            </div>
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-1">
+              <span class="text-purple-400 font-mono font-bold">02_audio_filtering.py</span>
+              <p class="text-gray-300">Geração sintética de tom musical, contaminação com ruído e restauração por máscara passa-baixa.</p>
+            </div>
+            <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl space-y-1">
+              <span class="text-emerald-400 font-mono font-bold">03_image_2dfft.py</span>
+              <p class="text-gray-300">Decomposição 2D, espectro centralizado por `fftshift` e compressão espacial.</p>
+            </div>
+          </div>
+
+          <div class="p-6 bg-gray-950 border border-gray-800 rounded-2xl text-center space-y-4">
+            <div class="text-sm font-semibold text-white">Acesse o Código Aberto:</div>
+            <div class="p-3 bg-gray-900 rounded-lg font-mono text-xs text-indigo-300 break-all border border-gray-800">
+              github.com/jasmineggril/algebra-linear-fft
+            </div>
+            <div class="text-[11px] text-gray-400">
+              Inclui documentação completa, instruções de instalação e relatório em Markdown (`relatorio.md`).
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 17: Conclusão e Q&A -->
+    <div class="slide" data-slide="17" data-speaker="Grupo (Todos)">
+      <div class="my-auto text-center max-w-3xl mx-auto space-y-6">
+        <div class="text-emerald-400 font-mono text-sm">
+          $$F_N^* F_N = N \cdot I_N \quad \blacksquare$$
+        </div>
+        <h2 class="text-4xl font-extrabold text-white">Muito Obrigado pela Atenção!</h2>
+        <p class="text-sm text-gray-400">
+          Apresentação realizada por Estevão, Francisco e Jasmine • Álgebra Linear
+        </p>
+
+        <div class="p-6 bg-gray-900/70 border border-gray-800 rounded-2xl text-left text-xs text-gray-300 space-y-3">
+          <div class="font-bold text-white text-sm">Referências Principais:</div>
+          <ul class="space-y-1 text-gray-400">
+            <li>• STRANG, Gilbert. <em>Linear Algebra and Learning from Data</em>. Wellesley-Cambridge Press, 2019.</li>
+            <li>• COOLEY, J. W.; TUKEY, J. W. <em>An Algorithm for the Machine Calculation of Complex Fourier Series</em>, 1965.</li>
+            <li>• OPPENHEIM, A. V.; SCHAFER, R. W. <em>Discrete-Time Signal Processing</em>. Prentice Hall.</li>
+          </ul>
+        </div>
+
+        <div class="pt-2 text-indigo-400 font-semibold text-sm animate-pulse">
+          Estamos abertos a perguntas, deduções algébricas e demonstrações ao vivo do código.
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Speaker Notes Modal / Drawer -->
+  <div id="speakerNotesDrawer" class="fixed bottom-14 left-0 right-0 max-h-56 bg-gray-950/95 border-t border-indigo-500/40 p-5 overflow-y-auto hidden z-40 backdrop-blur-md shadow-2xl">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-400" id="notesSpeakerName">Roteiro de Fala</span>
+        <span class="text-[11px] text-gray-500 font-mono">Use a tecla [N] para abrir/fechar</span>
+      </div>
+      <p id="speakerNotesContent" class="text-sm text-gray-200 leading-relaxed font-sans italic"></p>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <footer class="border-t border-gray-800/80 bg-gray-950/90 px-6 py-2.5 flex items-center justify-between text-xs text-gray-400 sticky bottom-0 z-30">
+    <div class="flex items-center gap-2">
+      <span class="font-mono text-gray-500">Navegação:</span>
+      <kbd class="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-300 font-mono text-[10px]">←</kbd>
+      <kbd class="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-300 font-mono text-[10px]">→</kbd>
+      <span class="text-gray-500 ml-2">ou [Espaço]</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button id="prevBtn" class="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded border border-gray-700 transition">
+        Anterior
+      </button>
+      <button id="nextBtn" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded transition">
+        Próximo
+      </button>
+    </div>
+  </footer>
+
+  <!-- Interactive Slide Controller Script -->
+  <script>
+    const speakerNotes = {
+      1: "Bom dia a todos, bom dia professor. Hoje apresentaremos nosso seminário sobre a Álgebra Linear da Transformada Rápida de Fourier, a FFT. Muito frequentemente a transformada de Fourier é introduzida sob a ótica da análise harmônica contínua ou do cálculo diferencial. Nosso objetivo central nesta apresentação é demonstrar que, no universo discreto e computacional, a Transformada Discreta de Fourier nada mais é do que uma elegante mudança de base ortogonal em um espaço vetorial de dimensão finita, e que a famosa aceleração dada pelo algoritmo FFT decorre estritamente de uma fatoração algébrica engenhosa de matrizes esparsas. Ao longo desta hora, eu apresentarei os alicerces teóricos e a construção da Matriz de Fourier; o Francisco demonstrará a decomposição matricial de Cooley-Tukey e seus ganhos assintóticos; e a Jasmine ilustrará as aplicações computacionais em áudio, imagens bidimensionais e compressão de vídeo.",
+      2: "Para iniciar, estabelecemos o nosso espaço de trabalho. Qualquer sinal físico digitalizado — seja uma gravação sonora de alguns milissegundos ou uma linha de pixels — consiste em uma sequência finita de N medições numéricas. Matematicamente, esse conjunto ordenado define um vetor coluna x pertencente ao espaço vetorial complexo C^N. A representação ordinária de um sinal no tempo utiliza a base canônica ortonormal padrão: cada componente x_n informa apenas a amplitude instantânea no instante n. Contudo, a base canônica é míope para periodicidades. Se quisermos inspecionar a composição harmônica do sinal, devemos projetar esse vetor x em uma nova base ortogonal {v_k} cujos elementos básicos correspondam a frequências puras. Trata-se, portanto, de uma transformação linear canônica T: C^N -> C^N.",
+      3: "Para construir essa nova base, recorremos à raiz primitiva N-ésima da unidade, denotada por omega_N. Geometricamente, as potências de omega_N particionam o círculo unitário no plano complexo em N arcos idênticos. O k-ésimo vetor da base espectral, v_k, é preenchido com progressões geométricas dessas potências. A propriedade que torna toda a teoria consistente é a ortogonalidade sob o produto interno hermitiano padrão. Quando calculamos o produto interno entre dois vetores distintos v_k e v_l, deparamo-nos com a soma de uma série geométrica finita de razão unitária complexa. Para qualquer k diferente de l, a soma fecha um polígono regular no plano complexo e resulta rigorosamente em zero. Quando k = l, a soma de N termos iguais a 1 resulta no escalar N. Logo, os vetores formam um conjunto ortogonal e, portanto, uma base para C^N.",
+      4: "Reunindo os vetores transpostos conjugados dessa base nas linhas de uma matriz, sintetizamos a célebre Matriz de Fourier F_N. Trata-se de uma matriz de Vandermonde simétrica cujos geradores são as potências de omega_N. Cada linha k age como um correlacionador espectral: quando multiplicamos a linha k pelo vetor do sinal temporal x, estamos projetando o sinal sobre a frequência k. Observem a beleza de F_4: as potências de omega_4 = -i alternam entre 1, -i, -1 e i. A Transformada Discreta de Fourier não exige integração numérica nem limites infinitesimais: ela é estritamente um operador linear matricial finito operando sobre vetores.",
+      5: "Uma consequência estrutural vital da ortogonalidade é que a matriz transposta conjugada de F_N, multiplicada por ela mesma, resulta em N vezes a matriz identidade. Isso significa que, a menos de um fator de escala 1/sqrt(N), a matriz de Fourier é unitária. Por conseguinte, a transformação inversa, que reconstrói o sinal no tempo, não requer a inversão gaussiana custosa de uma matriz comum: basta tomar a sua conjugada complexa e dividir por N. Além disso, pelo Teorema de Parseval, a energia vetorial euclidiana é perfeitamente preservada. No entanto, deparamo-nos com uma barreira computacional intransponível: para avaliar X = F_N x, uma multiplicação matricial cheia exige N^2 operações elementares com números complexos. Para um vetor de apenas um milhão de pontos, precisaríamos de um trilhão de operações. É exatamente aqui que a Álgebra Linear intervém com a fatoração esparsa de Cooley-Tukey, que o Francisco apresentará agora.",
+      6: "Obrigado, Estevão. Em 1965, J. W. Cooley e John Tukey formalizaram um método que revolucionou a computação moderna, embora raízes dessa intuição remontem aos rascunhos astronômicos de Gauss em 1805. A ideia central reside no particionamento do vetor temporal de entrada em duas metades: uma constituída exclusivamente pelos índices pares e outra pelos índices ímpares. Quando reescrevemos a somatória da DFT separando índices pares de ímpares, podemos colocar em evidência um fator escalar omega_N^k. Como a raiz da unidade ao quadrado satisfaz omega_N^2 = omega_{N/2}, cada uma dessas somatórias menores transforma-se rigorosamente em uma Transformada Discreta de Fourier independente de dimensão N/2. Contudo, para nós, alunos de Álgebra Linear, o aspecto fascinante não é a somatória escalar recursiva, mas como essa operação se traduz em termos de fatoração matricial estruturada.",
+      7: "Eis o ápice teórico do algoritmo: a representação matricial exata da decomposição de Cooley-Tukey. A matriz cheia F_N decompõe-se no produto de três matrizes especializadas. À direita, a matriz P_N é uma matriz de permutação que reordena o vetor de entrada, posicionando todos os elementos pares no topo e os ímpares na base. A matriz intermediária é diagonal por blocos: ela executa simultaneamente duas transformadas de Fourier de ordem reduzida N/2, sem qualquer acoplamento entre elas. À esquerda, temos a matriz de recombinação, composta por matrizes identidade e uma matriz diagonal Omega_{N/2}, cujos elementos diagonais são os fatores de rotação, os chamados twiddle factors. Por que essa fatoração é formidável? Porque nenhuma dessas matrizes é densa. Multiplicar por uma matriz de permutação custa zero operações aritméticas — apenas endereçamento de ponteiros. Multiplicar por uma matriz diagonal custa apenas N/2 operações. Substituímos matrizes cheias por matrizes com densidade esparsa.",
+      8: "Quando expandimos essa fatoração até os blocos atômicos de dimensão 2, a recursão gera o que denominamos Grafo em Borboleta. Cada estágio elementar consiste em uma operação extremamente barata: pega-se um par de valores complexos, multiplica-se um deles pelo fator omega_N^k, soma-se ao primeiro para gerar a saída superior e subtrai-se para gerar a inferior. Observem que a matriz de permutação composta resultante de toda a recursão possui uma propriedade combinatória notável: a permutação por reversão de bits, ou bit-reversal. O elemento de índice 1 em binário de 3 bits, 001, tem seus dígitos espelhados para 100, que é o índice 4. Isso permite aos processadores modernos realizar a transformada in-place, sem demandar alocação adicional de memória vetorial.",
+      9: "Neste slide apresentamos os dados experimentais coletados diretamente do código 01_dft_vs_fft.py presente em nosso repositório. Pelo Teorema Mestre, a relação de recorrência T(N) = 2T(N/2) + N colapsa assintoticamente em O(N log_2 N). Na prática, para um vetor modesto de dimensão 1024, o número de multiplicações complexas cai de aproximadamente um milhão para meras cinco mil — uma economia superior a 98% da capacidade de processamento. No gráfico empírico que geramos, enquanto a multiplicação direta da Matriz de Fourier de Vandermonde começa a engasgar e elevar o consumo de CPU a partir de N = 2048, a FFT executada em potências de base 2 mantém tempo de resposta na escala de milissegundos. Agora que compreendemos o alicerce matricial e o motor computacional do algoritmo, a Jasmine demonstrará como essa eficiência viabiliza o processamento em tempo real de áudio, imagem e vídeo.",
+      10: "Obrigada, Francisco. Entrando no campo das aplicações computacionais, o primeiro grande domínio transformado pela FFT é o processamento de áudio. Uma gravação de voz ou instrumento musical nada mais é do que uma sucessão de flutuações de pressão acústica amostradas no tempo. Na taxa padrão de estúdio de 44,1 kHz, um único minuto de áudio monofônico gera mais de dois milhões e meio de pontos. Se dependêssemos da matriz densa O(N^2) apresentada pelo Estevão, seria matematicamente impossível aplicar um equalizador ou decodificar áudio em tempo real. Graças à FFT, particionamos esse vetor em janelas temporais de N = 1024 ou 2048 pontos e calculamos o espectro instantâneo em frações de milissegundo, permitindo identificar com precisão cirúrgica a amplitude e a fase de cada harmônico presente.",
+      11: "No script 02_audio_filtering.py, que disponibilizamos no repositório, simulamos uma situação prática: geramos uma nota musical pura — um Lá de concerto em 440 Hz — e injetamos deliberadamente uma interferência severa em 4000 Hz. No domínio do tempo, o sinal está irreconhecível e poluído. No entanto, ao aplicarmos a transformação X = F_N x, a mistura caótica se dissocia em dois picos ortogonais isolados no espectro de potências. A filtragem torna-se trivial: definimos uma matriz de projeção diagonal H que multiplica por zero todas as frequências acima de 1000 Hz. Em seguida, invocamos a transformada inversa F_N^* / N. O resultado final é a recuperação perfeita do sinal senoidal limpo, demonstrando que operações de convolução complexas no tempo reduzem-se a simples produtos de Hadamard no domínio da frequência.",
+      12: "Avançando para duas dimensões, uma imagem em escala de cinza nada mais é do que uma matriz de intensidades de luminosidade A. Como estendemos a formulação de Fourier para matrizes? Pela propriedade de separabilidade linear. A Transformada Discreta de Fourier Bidimensional pode ser expressa elegantemente como a multiplicação da matriz de imagem A pela matriz de Fourier F_M à esquerda e pela transposta F_N^T à direita. Isso equivale matematicamente a aplicar a FFT 1D ao longo de cada uma das linhas da matriz e, sucessivamente, aplicar a FFT 1D ao longo de cada uma das colunas. As baixas frequências espaciais correspondem a transições suaves de cor e áreas homogêneas de fundo; já as altas frequências codificam contornos abruptos, arestas, detalhes finos e ruídos pontuais.",
+      13: "No script 03_image_2dfft.py, exploramos a atenuação de artefatos visuais. Ao aplicarmos a função fftshift, concentramos toda a energia estrutural da imagem no centro da matriz espectral. Quando inspecionamos o mapa logarítmico de magnitudes, percebemos que a vasta maioria dos coeficientes periféricos de alta frequência possui magnitude próxima de zero. Ao aplicarmos uma máscara circular passa-baixa, eliminamos integralmente as ondulações espaciais ruidosas mantendo preservadas as estruturas visuais principais. Além da filtragem, reside aqui a base da compressão de imagens: se 90% dos coeficientes matriciais de Fourier são nulos ou descartáveis sem que o olho humano note degradação substancial, precisamos armazenar ou transmitir apenas os 10% restantes, reduzindo drasticamente o volume de dados do arquivo.",
+      14: "Quando avançamos para o vídeo digital, estamos lidando com matrizes 2D empilhadas ao longo do eixo temporal. Transmitir trinta quadros brutos em resolução 4K por segundo saturaria qualquer infraestrutura de rede do planeta. Padrões globais como JPEG, MPEG e o codec H.264/H.265 utilizam a Transformada Discreta de Cosseno — que é uma prima direta da FFT operando no campo real — para compactar blocos de 8 por 8 pixels. Além disso, a FFT desempenha um papel fulcral na estimativa de movimento: pelo Teorema da Convolução, a correlação cruzada entre dois quadros sucessivos para calcular vetores de deslocamento, que custaria O(N^2) operações espaciais diretas, é realizada em O(N log N) calculando o produto ponto a ponto no domínio de Fourier. É a Álgebra Linear viabilizando o streaming contemporâneo.",
+      15: "(Estevão): Para sintetizar o que vimos, a Transformada Rápida de Fourier não é uma mera conveniência numérica ou fórmula isolada; trata-se de um monumento da Álgebra Linear aplicada. Ela exemplifica com perfeição como a compreensão geométrica das transformações ortogonais e a manipulação da estrutura matricial de Vandermonde podem contornar barreiras computacionais que pareciam intransponíveis. (Francisco): Sem a redução de complexidade assintótica proporcionada pela fatoração de Cooley-Tukey, tecnologias fundamentais da nossa rotina seriam inviáveis. A modulação OFDM presente em todas as conexões Wi-Fi e redes móveis celulares realiza milhões de FFTs e IFFTs por segundo diretamente no silício dos roteadores e smartphones para multiplexar canais ortogonais de rádio. (Jasmine): Na medicina, as imagens geradas por uma máquina de ressonância magnética capturam originalmente dados de eco nuclear no chamado 'espaço k', que nada mais é do que o domínio espectral de Fourier. A imagem anatômica tridimensional que o médico analisa é obtida aplicando a transformada inversa matricial sobre esses dados brutos.",
+      16: "Em atendimento rigoroso às diretrizes estipuladas para este seminário, todos os algoritmos, provas matriciais, rotinas de benchmark e pipelines de processamento de áudio e imagem foram implementados por nós em Python e estão abertamente disponíveis no repositório GitHub exibido na tela. Os scripts são totalmente reprodutíveis, utilizam apenas bibliotecas numéricas elementares para manipulação matricial e contam com documentação detalhada no arquivo de relatório. Convidamos todos a clonarem o código e realizarem seus próprios experimentos com filtragem de frequências.",
+      17: "(Estevão): Encerramos aqui a exposição formal do nosso trabalho. Agradecemos imensamente a atenção de todos e estamos agora à inteira disposição do professor e da turma para responder a quaisquer perguntas, detalhar passagens algébricas da fatoração ou demonstrar a execução ao vivo dos códigos no repositório. Muito obrigado."
+    };
+
+    let currentSlide = 1;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const currentSlideNumEl = document.getElementById('currentSlideNum');
+    const totalSlidesNumEl = document.getElementById('totalSlidesNum');
+    const speakerBadgeEl = document.getElementById('speakerBadge');
+    const speakerNotesDrawer = document.getElementById('speakerNotesDrawer');
+    const speakerNotesContent = document.getElementById('speakerNotesContent');
+    const notesSpeakerName = document.getElementById('notesSpeakerName');
+    const toggleNotesBtn = document.getElementById('toggleNotesBtn');
+
+    totalSlidesNumEl.textContent = totalSlides;
+
+    function updateSlide(index) {
+      if (index < 1 || index > totalSlides) return;
+      
+      slides.forEach(slide => slide.classList.remove('active'));
+      const activeSlide = document.querySelector(`.slide[data-slide="${index}"]`);
+      activeSlide.classList.add('active');
+
+      currentSlide = index;
+      currentSlideNumEl.textContent = currentSlide;
+
+      const speaker = activeSlide.getAttribute('data-speaker') || 'Grupo';
+      speakerBadgeEl.textContent = `Responsável: ${speaker}`;
+      
+      // Update Speaker Notes Drawer
+      notesSpeakerName.textContent = `Roteiro de Fala • ${speaker} (Slide ${currentSlide})`;
+      speakerNotesContent.textContent = speakerNotes[currentSlide] || "Sem notas cadastradas para este slide.";
+
+      // Re-trigger MathJax typeset for newly displayed slide
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([activeSlide]).catch((err) => console.log(err));
+      }
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentSlide < totalSlides) updateSlide(currentSlide + 1);
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentSlide > 1) updateSlide(currentSlide - 1);
+    });
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        if (currentSlide < totalSlides) updateSlide(currentSlide + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (currentSlide > 1) updateSlide(currentSlide - 1);
+      } else if (e.key.toLowerCase() === 'n') {
+        toggleNotes();
+      }
+    });
+
+    function toggleNotes() {
+      speakerNotesDrawer.classList.toggle('hidden');
+    }
+
+    toggleNotesBtn.addEventListener('click', toggleNotes);
+
+    // Initial setup
+    updateSlide(1);
+  </script>
+</body>
+</html>
