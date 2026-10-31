@@ -56,12 +56,16 @@ Onde:
 
 Essa decomposição reduz o custo assintótico de O(N²) para O(N log₂ N), pois cada nível realiza O(N) operações e existem log₂ N níveis.
 
+## 4. Aplicações Práticas Desenvolvidas
 
 ### 4.1 Processamento e Filtragem de Áudio (1D)
 O script gera uma senoide de 440 Hz e adiciona uma interferência tonal de 4.000 Hz. A DFT/FFT representa o sinal no domínio da frequência; uma máscara passa-baixa zera os bins acima de 1.000 Hz, e a transformada inversa reconstrói o sinal filtrado. Este exemplo sintético ilustra filtragem, não remoção universal de ruído.
 
 ### 4.2 Processamento de Imagens (2D)
 Uma imagem digital em tons de cinza é uma matriz A. Sua DFT bidimensional pode ser expressa como F_M A F_Nᵀ, ou calculada aplicando transformadas unidimensionais às linhas e colunas. No script, uma máscara radial de baixas frequências realiza filtragem. Separadamente, um limiar de magnitude zera coeficientes e permite avaliar a proporção preservada e o erro relativo de reconstrução; isso ilustra esparsificação espectral, não um formato completo de arquivo comprimido.
+
+### 4.3 Contextualização do Processamento de Vídeo
+Vídeo pode ser entendido como uma sequência de quadros e, portanto, como um sinal com dimensões espaciais e temporais. DFT e DCT são transformações distintas: codecs de vídeo podem usar transformações baseadas em cossenos ou outras representações, junto a predição, quantização e codificação para representar os dados. A correlação cruzada entre quadros ou regiões pode ser calculada por convoluções no domínio da frequência e, com preenchimento adequado quando necessário, pode aproveitar a FFT para reduzir o custo em problemas de maior porte. Este repositório contextualiza essas ideias, mas não implementa um codec completo.
 
 ## 5. DFT, FFT e DCT
 A DFT é a transformação linear que converte uma sequência finita em coeficientes complexos da base de Fourier. A FFT não é outra transformação: é uma família de algoritmos eficientes para calcular a mesma DFT, como a fatoração recursiva de Cooley-Tukey para tamanhos apropriados. Já a DCT (Transformada Discreta de Cosseno) usa uma base de cossenos e é uma transformação distinta; não é uma versão real da FFT. DCT e DFT podem ter algoritmos rápidos relacionados, mas não devem ser confundidas.
