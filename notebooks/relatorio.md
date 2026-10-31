@@ -58,27 +58,20 @@ Essa decomposição reduz o custo assintótico de O(N²) para O(N log₂ N), poi
 
 
 ### 4.1 Processamento e Filtragem de Áudio (1D)
-Um sinal temporal acústico composto por harmônicos e ruído aditivo de alta frequência é transformado ao domínio espectral via FFT. Cria-se uma matriz diagonal de filtragem H, onde frequências acima do limiar são zeradas. O sinal limpo é obtido por IFFT.
+O script gera uma senoide de 440 Hz e adiciona uma interferência tonal de 4.000 Hz. A DFT/FFT representa o sinal no domínio da frequência; uma máscara passa-baixa zera os bins acima de 1.000 Hz, e a transformada inversa reconstrói o sinal filtrado. Este exemplo sintético ilustra filtragem, não remoção universal de ruído.
 
-### 4.2 Processamento e Compressão de Imagens (2D-FFT)
+### 4.2 Processamento de Imagens (2D)
+Uma imagem digital em tons de cinza é uma matriz A. Sua DFT bidimensional pode ser expressa como F_M A F_Nᵀ, ou calculada aplicando transformadas unidimensionais às linhas e colunas. No script, uma máscara radial de baixas frequências realiza filtragem. Separadamente, um limiar de magnitude zera coeficientes e permite avaliar a proporção preservada e o erro relativo de reconstrução; isso ilustra esparsificação espectral, não um formato completo de arquivo comprimido.
 
-## 6. Referências
+## 5. DFT, FFT e DCT
+A DFT é a transformação linear que converte uma sequência finita em coeficientes complexos da base de Fourier. A FFT não é outra transformação: é uma família de algoritmos eficientes para calcular a mesma DFT, como a fatoração recursiva de Cooley-Tukey para tamanhos apropriados. Já a DCT (Transformada Discreta de Cosseno) usa uma base de cossenos e é uma transformação distinta; não é uma versão real da FFT. DCT e DFT podem ter algoritmos rápidos relacionados, mas não devem ser confundidas.
 
-* STRANG, Gilbert. *Introduction to Linear Algebra*. Seção 3.5.
-* ANTON, Howard; RORRES, Chris. *Álgebra Linear com Aplicações*. Seção 6.6.
-* COOLEY, J. W.; TUKEY, J. W. *An Algorithm for the Machine Calculation of Complex Fourier Series*, 1965.
-Uma imagem digital é tratada como uma matriz A. A transformada bidimensional aplica a DFT nas linhas e nas colunas consecutivamente: Â = F_M * A * F_Nᵀ. No script, a filtragem usa um raio central de baixas frequências, enquanto a compressão usa um limiar de magnitude; percentual mantido e erro relativo são medidos separadamente.
+## 6. Estrutura dos Módulos Práticos
+1. `01_dft_vs_fft.py`: DFT matricial, implementação recursiva de Cooley-Tukey, validação com `numpy.fft.fft` e benchmark local reproduzível.
+2. `02_audio_filtering.py`: geração de sinal com interferência tonal, filtragem espectral e gravação dos WAVs de entrada e saída.
+3. `03_image_2dfft.py`: DFT bidimensional, filtragem passa-baixa e demonstração separada de limiar por magnitude, com percentual preservado e erro de reconstrução.
 
----
-
-## 5. Estrutura dos Módulos Práticos
-
-1. `01_dft_vs_fft.py`: Construção da matriz F_N, implementação Cooley-Tukey e medição de tempo comparando O(N²) contra O(N log N).
-2. `02_audio_filtering.py`: Geração de sinal senoidal com ruído em 4 kHz, identificação espectral e atenuação por máscara passa-baixa.
-3. `03_image_2dfft.py`: Decomposição espectral bidimensional, mascaramento radial e reconstrução inversa de imagem.
-
-## 6. Referências
-
-* STRANG, Gilbert. *Introduction to Linear Algebra*. Seção 3.5.
-* ANTON, Howard; RORRES, Chris. *Álgebra Linear com Aplicações*. Seção 6.6.
-* COOLEY, J. W.; TUKEY, J. W. *An Algorithm for the Machine Calculation of Complex Fourier Series*, 1965.
+## 7. Referências
+- STRANG, Gilbert. *Introduction to Linear Algebra*. Seção 3.5.
+- ANTON, Howard; RORRES, Chris. *Álgebra Linear com Aplicações*. Seção 6.6.
+- COOLEY, J. W.; TUKEY, J. W. *An Algorithm for the Machine Calculation of Complex Fourier Series*, 1965.

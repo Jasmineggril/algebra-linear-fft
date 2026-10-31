@@ -35,7 +35,8 @@ def fft_cooley_tukey(x):
     ])
 
 # 3. Validação numérica contra a implementação do NumPy
-teste = np.random.default_rng(42).normal(size=32) + 1j * np.random.default_rng(43).normal(size=32)
+rng = np.random.default_rng(42)
+teste = rng.normal(size=32) + 1j * rng.normal(size=32)
 resultado_cooley_tukey = fft_cooley_tukey(teste)
 resultado_numpy = np.fft.fft(teste)
 if not np.allclose(resultado_cooley_tukey, resultado_numpy):
@@ -48,7 +49,7 @@ tempos_dft = []
 tempos_fft = []
 
 for N in tamanhos:
-    x = np.random.random(N)
+    x = rng.random(N)
     
     # Tempo DFT
     t0 = time.perf_counter()
