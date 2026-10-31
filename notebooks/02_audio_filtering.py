@@ -1,5 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import wave
+from pathlib import Path
+
+RESULTADOS = Path(__file__).resolve().parent.parent / 'resultados'
+RESULTADOS.mkdir(exist_ok=True)
 
 # 1. Simulação de um sinal sonoro com ruído
 taxa_amostragem = 44100  # 44.1 kHz (taxa padrão de áudio)
@@ -24,6 +29,18 @@ espectro_filtrado[mascara_filtro] = 0
 
 # 4. Reconstrução do sinal no tempo via IFFT (Transformada Inversa)
 sinal_recuperado = np.fft.ifft(espectro_filtrado).real
+
+def salvar_wav(caminho, sinal):
+	amostras = np.int16(np.clip(sinal, -1, 1) * 32767)
+	with wave.open(str(caminho), 'wb') as arquivo:
+		arquivo.setnchannels(1)
+		arquivo.setsampwidth(2)
+		arquivo.setframerate(taxa_amostragem)
+		arquivo.writeframes(amostras.tobytes())
+
+salvar_wav(RESULTADOS / 'audio_com_ruido.wav', sinal_poluido)
+salvar_wav(RESULTADOS / 'audio_filtrado.wav', sinal_recuperado)
+print('Arquivos de áudio salvos em resultados/: audio_com_ruido.wav e audio_filtrado.wav')
 
 # 5. Visualização dos resultados para a apresentação
 fig, axs = plt.subplots(3, 1, figsize=(10, 8))
@@ -55,5 +72,5 @@ axs[2].legend()
 axs[2].grid(True)
 
 plt.tight_layout()
-plt.savefig('audio_filtering_demo.png')
-plt.show()
+plt.savefig(RESULTADOS / 'audio_filtering_demo.png', dpi=150)
+plt.close()

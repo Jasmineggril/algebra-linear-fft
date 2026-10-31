@@ -54,20 +54,20 @@ Onde:
 * Ω_{N/2} contém os fatores de rotação (twiddle factors) em uma matriz diagonal.
 * O bloco central aplica recursivamente duas transformadas de metade do tamanho.
 
-Essa decomposição reduz o número de operações de N² para (N/2) * log₂ N.
+Essa decomposição reduz o custo assintótico de O(N²) para O(N log₂ N), pois cada nível realiza O(N) operações e existem log₂ N níveis.
 
----
-
-## 4. Aplicações Práticas Desenvolvidas
 
 ### 4.1 Processamento e Filtragem de Áudio (1D)
 Um sinal temporal acústico composto por harmônicos e ruído aditivo de alta frequência é transformado ao domínio espectral via FFT. Cria-se uma matriz diagonal de filtragem H, onde frequências acima do limiar são zeradas. O sinal limpo é obtido por IFFT.
 
 ### 4.2 Processamento e Compressão de Imagens (2D-FFT)
-Uma imagem digital é tratada como uma matriz A. A transformada bidimensional aplica a DFT nas linhas e nas colunas consecutivamente: Â = F_M * A * F_Nᵀ. A compressão e atenuação de ruído são obtidas mantendo-se apenas o raio central de baixas frequências.
 
-### 4.3 Compressão de Vídeo
-Fluxos de vídeo exploram a redundância espacial interquadros por meio da Transformada Discreta de Cosseno (DCT) combinada com vetores de movimento calculados via correlação cruzada acelerada no domínio da frequência.
+## 6. Referências
+
+* STRANG, Gilbert. *Introduction to Linear Algebra*. Seção 3.5.
+* ANTON, Howard; RORRES, Chris. *Álgebra Linear com Aplicações*. Seção 6.6.
+* COOLEY, J. W.; TUKEY, J. W. *An Algorithm for the Machine Calculation of Complex Fourier Series*, 1965.
+Uma imagem digital é tratada como uma matriz A. A transformada bidimensional aplica a DFT nas linhas e nas colunas consecutivamente: Â = F_M * A * F_Nᵀ. No script, a filtragem usa um raio central de baixas frequências, enquanto a compressão usa um limiar de magnitude; percentual mantido e erro relativo são medidos separadamente.
 
 ---
 
@@ -76,3 +76,9 @@ Fluxos de vídeo exploram a redundância espacial interquadros por meio da Trans
 1. `01_dft_vs_fft.py`: Construção da matriz F_N, implementação Cooley-Tukey e medição de tempo comparando O(N²) contra O(N log N).
 2. `02_audio_filtering.py`: Geração de sinal senoidal com ruído em 4 kHz, identificação espectral e atenuação por máscara passa-baixa.
 3. `03_image_2dfft.py`: Decomposição espectral bidimensional, mascaramento radial e reconstrução inversa de imagem.
+
+## 6. Referências
+
+* STRANG, Gilbert. *Introduction to Linear Algebra*. Seção 3.5.
+* ANTON, Howard; RORRES, Chris. *Álgebra Linear com Aplicações*. Seção 6.6.
+* COOLEY, J. W.; TUKEY, J. W. *An Algorithm for the Machine Calculation of Complex Fourier Series*, 1965.

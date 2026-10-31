@@ -98,7 +98,7 @@
           Álgebra Linear da Transformada Rápida de Fourier (FFT)
         </h1>
         <p class="text-lg md:text-xl text-gray-400 font-light">
-          Formulação Matricial, Fatoração Esparsa e Aplicações em Processamento de Sinais, Imagens e Vídeo
+          Formulação Matricial, Fatoração Esparsa e Aplicações em Processamento de Sinais e Imagens
         </p>
 
         <div class="p-6 bg-gray-900/60 border border-gray-800 rounded-2xl max-w-2xl mx-auto backdrop-blur-sm shadow-xl">
@@ -396,19 +396,14 @@
               $$\text{Speedup} \approx \frac{2N}{\log_2 N}$$
             </div>
             <ul class="text-xs text-gray-300 space-y-1">
-              <li>• Para $N = 1024$: $\approx 204\times$ mais rápida.</li>
-              <li>• Para $N = 10^6$: $\approx 100.000\times$ mais rápida.</li>
+              <li>• A vantagem prática depende da implementação, do hardware e do tamanho do vetor.</li>
+              <li>• O gráfico abaixo deve ser interpretado como uma medição deste ambiente.</li>
             </ul>
           </div>
 
           <div class="p-5 bg-gray-900/80 border border-gray-800 rounded-2xl space-y-3">
             <h3 class="font-semibold text-blue-400 text-sm">Script `01_dft_vs_fft.py`</h3>
-            <p class="text-xs text-gray-300">Medições reais do nosso repositório:</p>
-            <div class="text-xs text-gray-400 bg-gray-950 p-2 rounded font-mono">
-              $N=2048$:<br>
-              • DFT: 0.12 s (curva quadrática)<br>
-              • FFT: 0.0008 s (reta plana)
-            </div>
+            <p class="text-xs text-gray-300">O script mede os tempos no ambiente em que for executado e salva o gráfico em `resultados/`.</p>
           </div>
         </div>
       </div>
@@ -536,22 +531,22 @@
           <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl text-xs space-y-3">
             <div class="font-bold text-emerald-400 text-sm">O Princípio da Compressão de Imagens</div>
             <p class="text-gray-300">
-              Na maioria das imagens do mundo real, mais de $90\%$ da energia total está confinada nos coeficientes centrais de baixa frequência.
+              A concentração de energia nos coeficientes centrais varia conforme a imagem e deve ser medida no experimento.
             </p>
             <div class="p-3 bg-gray-900 rounded-lg text-gray-400 font-mono text-[11px]">
-              Zerar os $90\%$ dos coeficientes de menor energia permite descartar dados na transmissão sem perda perceptível à visão humana.
+              O script usa um limiar de magnitude e informa o percentual mantido e o erro relativo de reconstrução.
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- SLIDE 14: Compressão de Vídeo -->
+    <!-- SLIDE 14: Contexto de Vídeo -->
     <div class="slide" data-slide="14" data-speaker="Jasmine">
       <div class="space-y-6">
         <div>
           <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Aplicações Avançadas</span>
-          <h2 class="text-3xl font-bold text-white mt-1">Aplicação 3 — Compressão de Vídeo e Estimativa de Movimento</h2>
+          <h2 class="text-3xl font-bold text-white mt-1">Contexto — Vídeo, DCT e Estimativa de Movimento</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -562,18 +557,18 @@
             </div>
             <div class="p-4 bg-gray-900/80 border border-gray-800 rounded-xl">
               <h3 class="font-semibold text-white text-sm mb-1">A DCT e Codecs Modernos</h3>
-              <p>Padrões como JPEG, MPEG e H.264 empregam a Transformada Discreta de Cosseno (versão estritamente real da FFT) em blocos $8 \times 8$.</p>
+              <p>JPEG e alguns padrões de vídeo usam variantes da Transformada Discreta de Cosseno em blocos. DCT e FFT são transformadas distintas, embora relacionadas matematicamente.</p>
             </div>
           </div>
 
           <div class="p-5 bg-gray-950 border border-gray-800 rounded-2xl space-y-3">
             <div class="font-bold text-indigo-300 text-sm">Correlação Cruzada Rápida via FFT</div>
-            <p class="text-xs text-gray-300">Para encontrar vetores de movimento entre quadros consecutivos:</p>
+            <p class="text-xs text-gray-300">A correlação via FFT é uma técnica possível para comparar quadros, mas codecs também usam métodos específicos de estimação de movimento:</p>
             <div class="p-3 bg-gray-900 rounded-lg font-mono text-center text-xs text-purple-300">
               $$f \star g = \text{IFFT}\Big( \text{FFT}(f)^* \odot \text{FFT}(g) \Big)$$
             </div>
             <p class="text-[11px] text-emerald-400 text-center font-mono">
-              Complexidade Espacial $\mathcal{O}(N^2) \xrightarrow{\text{FFT}} \mathcal{O}(N \log N)$
+              Correlação no domínio da frequência pode reduzir o custo de convoluções e correlações em matrizes grandes.
             </p>
           </div>
         </div>
@@ -711,7 +706,7 @@
   <!-- Interactive Slide Controller Script -->
   <script>
     const speakerNotes = {
-      1: "Bom dia a todos, bom dia professor. Hoje apresentaremos nosso seminário sobre a Álgebra Linear da Transformada Rápida de Fourier, a FFT. Muito frequentemente a transformada de Fourier é introduzida sob a ótica da análise harmônica contínua ou do cálculo diferencial. Nosso objetivo central nesta apresentação é demonstrar que, no universo discreto e computacional, a Transformada Discreta de Fourier nada mais é do que uma elegante mudança de base ortogonal em um espaço vetorial de dimensão finita, e que a famosa aceleração dada pelo algoritmo FFT decorre estritamente de uma fatoração algébrica engenhosa de matrizes esparsas. Ao longo desta hora, eu apresentarei os alicerces teóricos e a construção da Matriz de Fourier; o Francisco demonstrará a decomposição matricial de Cooley-Tukey e seus ganhos assintóticos; e a Jasmine ilustrará as aplicações computacionais em áudio, imagens bidimensionais e compressão de vídeo.",
+      1: "Bom dia a todos, bom dia professor. Hoje apresentaremos nosso seminário sobre a Álgebra Linear da Transformada Rápida de Fourier, a FFT. Muito frequentemente a transformada de Fourier é introduzida sob a ótica da análise harmônica contínua ou do cálculo diferencial. Nosso objetivo central nesta apresentação é demonstrar que, no universo discreto e computacional, a Transformada Discreta de Fourier nada mais é do que uma mudança de base ortogonal em um espaço vetorial de dimensão finita, e que a aceleração dada pelo algoritmo FFT decorre de uma fatoração algébrica de matrizes estruturadas. Ao longo desta hora, eu apresentarei os alicerces teóricos e a construção da Matriz de Fourier; o Francisco demonstrará a decomposição matricial de Cooley-Tukey e seus ganhos assintóticos; e a Jasmine ilustrará as aplicações computacionais em áudio e imagens bidimensionais.",
       2: "Para iniciar, estabelecemos o nosso espaço de trabalho. Qualquer sinal físico digitalizado — seja uma gravação sonora de alguns milissegundos ou uma linha de pixels — consiste em uma sequência finita de N medições numéricas. Matematicamente, esse conjunto ordenado define um vetor coluna x pertencente ao espaço vetorial complexo C^N. A representação ordinária de um sinal no tempo utiliza a base canônica ortonormal padrão: cada componente x_n informa apenas a amplitude instantânea no instante n. Contudo, a base canônica é míope para periodicidades. Se quisermos inspecionar a composição harmônica do sinal, devemos projetar esse vetor x em uma nova base ortogonal {v_k} cujos elementos básicos correspondam a frequências puras. Trata-se, portanto, de uma transformação linear canônica T: C^N -> C^N.",
       3: "Para construir essa nova base, recorremos à raiz primitiva N-ésima da unidade, denotada por omega_N. Geometricamente, as potências de omega_N particionam o círculo unitário no plano complexo em N arcos idênticos. O k-ésimo vetor da base espectral, v_k, é preenchido com progressões geométricas dessas potências. A propriedade que torna toda a teoria consistente é a ortogonalidade sob o produto interno hermitiano padrão. Quando calculamos o produto interno entre dois vetores distintos v_k e v_l, deparamo-nos com a soma de uma série geométrica finita de razão unitária complexa. Para qualquer k diferente de l, a soma fecha um polígono regular no plano complexo e resulta rigorosamente em zero. Quando k = l, a soma de N termos iguais a 1 resulta no escalar N. Logo, os vetores formam um conjunto ortogonal e, portanto, uma base para C^N.",
       4: "Reunindo os vetores transpostos conjugados dessa base nas linhas de uma matriz, sintetizamos a célebre Matriz de Fourier F_N. Trata-se de uma matriz de Vandermonde simétrica cujos geradores são as potências de omega_N. Cada linha k age como um correlacionador espectral: quando multiplicamos a linha k pelo vetor do sinal temporal x, estamos projetando o sinal sobre a frequência k. Observem a beleza de F_4: as potências de omega_4 = -i alternam entre 1, -i, -1 e i. A Transformada Discreta de Fourier não exige integração numérica nem limites infinitesimais: ela é estritamente um operador linear matricial finito operando sobre vetores.",
@@ -719,12 +714,12 @@
       6: "Obrigado, Estevão. Em 1965, J. W. Cooley e John Tukey formalizaram um método que revolucionou a computação moderna, embora raízes dessa intuição remontem aos rascunhos astronômicos de Gauss em 1805. A ideia central reside no particionamento do vetor temporal de entrada em duas metades: uma constituída exclusivamente pelos índices pares e outra pelos índices ímpares. Quando reescrevemos a somatória da DFT separando índices pares de ímpares, podemos colocar em evidência um fator escalar omega_N^k. Como a raiz da unidade ao quadrado satisfaz omega_N^2 = omega_{N/2}, cada uma dessas somatórias menores transforma-se rigorosamente em uma Transformada Discreta de Fourier independente de dimensão N/2. Contudo, para nós, alunos de Álgebra Linear, o aspecto fascinante não é a somatória escalar recursiva, mas como essa operação se traduz em termos de fatoração matricial estruturada.",
       7: "Eis o ápice teórico do algoritmo: a representação matricial exata da decomposição de Cooley-Tukey. A matriz cheia F_N decompõe-se no produto de três matrizes especializadas. À direita, a matriz P_N é uma matriz de permutação que reordena o vetor de entrada, posicionando todos os elementos pares no topo e os ímpares na base. A matriz intermediária é diagonal por blocos: ela executa simultaneamente duas transformadas de Fourier de ordem reduzida N/2, sem qualquer acoplamento entre elas. À esquerda, temos a matriz de recombinação, composta por matrizes identidade e uma matriz diagonal Omega_{N/2}, cujos elementos diagonais são os fatores de rotação, os chamados twiddle factors. Por que essa fatoração é formidável? Porque nenhuma dessas matrizes é densa. Multiplicar por uma matriz de permutação custa zero operações aritméticas — apenas endereçamento de ponteiros. Multiplicar por uma matriz diagonal custa apenas N/2 operações. Substituímos matrizes cheias por matrizes com densidade esparsa.",
       8: "Quando expandimos essa fatoração até os blocos atômicos de dimensão 2, a recursão gera o que denominamos Grafo em Borboleta. Cada estágio elementar consiste em uma operação extremamente barata: pega-se um par de valores complexos, multiplica-se um deles pelo fator omega_N^k, soma-se ao primeiro para gerar a saída superior e subtrai-se para gerar a inferior. Observem que a matriz de permutação composta resultante de toda a recursão possui uma propriedade combinatória notável: a permutação por reversão de bits, ou bit-reversal. O elemento de índice 1 em binário de 3 bits, 001, tem seus dígitos espelhados para 100, que é o índice 4. Isso permite aos processadores modernos realizar a transformada in-place, sem demandar alocação adicional de memória vetorial.",
-      9: "Neste slide apresentamos os dados experimentais coletados diretamente do código 01_dft_vs_fft.py presente em nosso repositório. Pelo Teorema Mestre, a relação de recorrência T(N) = 2T(N/2) + N colapsa assintoticamente em O(N log_2 N). Na prática, para um vetor modesto de dimensão 1024, o número de multiplicações complexas cai de aproximadamente um milhão para meras cinco mil — uma economia superior a 98% da capacidade de processamento. No gráfico empírico que geramos, enquanto a multiplicação direta da Matriz de Fourier de Vandermonde começa a engasgar e elevar o consumo de CPU a partir de N = 2048, a FFT executada em potências de base 2 mantém tempo de resposta na escala de milissegundos. Agora que compreendemos o alicerce matricial e o motor computacional do algoritmo, a Jasmine demonstrará como essa eficiência viabiliza o processamento em tempo real de áudio, imagem e vídeo.",
+      9: "O script 01_dft_vs_fft.py calcula um benchmark local entre a DFT matricial e a implementação Cooley-Tukey. A recorrência T(N) = 2T(N/2) + O(N) explica a complexidade O(N log N), enquanto a multiplicação matricial direta tem custo O(N^2). Os tempos exibidos no gráfico dependem do ambiente de execução e não são resultados universais. Agora veremos aplicações em áudio e imagens.",
       10: "Obrigada, Francisco. Entrando no campo das aplicações computacionais, o primeiro grande domínio transformado pela FFT é o processamento de áudio. Uma gravação de voz ou instrumento musical nada mais é do que uma sucessão de flutuações de pressão acústica amostradas no tempo. Na taxa padrão de estúdio de 44,1 kHz, um único minuto de áudio monofônico gera mais de dois milhões e meio de pontos. Se dependêssemos da matriz densa O(N^2) apresentada pelo Estevão, seria matematicamente impossível aplicar um equalizador ou decodificar áudio em tempo real. Graças à FFT, particionamos esse vetor em janelas temporais de N = 1024 ou 2048 pontos e calculamos o espectro instantâneo em frações de milissegundo, permitindo identificar com precisão cirúrgica a amplitude e a fase de cada harmônico presente.",
-      11: "No script 02_audio_filtering.py, que disponibilizamos no repositório, simulamos uma situação prática: geramos uma nota musical pura — um Lá de concerto em 440 Hz — e injetamos deliberadamente uma interferência severa em 4000 Hz. No domínio do tempo, o sinal está irreconhecível e poluído. No entanto, ao aplicarmos a transformação X = F_N x, a mistura caótica se dissocia em dois picos ortogonais isolados no espectro de potências. A filtragem torna-se trivial: definimos uma matriz de projeção diagonal H que multiplica por zero todas as frequências acima de 1000 Hz. Em seguida, invocamos a transformada inversa F_N^* / N. O resultado final é a recuperação perfeita do sinal senoidal limpo, demonstrando que operações de convolução complexas no tempo reduzem-se a simples produtos de Hadamard no domínio da frequência.",
+      11: "No script 02_audio_filtering.py, geramos uma senoide de 440 Hz e adicionamos uma interferência de 4000 Hz. A máscara passa-baixa remove as frequências acima de 1000 Hz antes da IFFT. Como se trata de um experimento sintético e de um filtro ideal, a reconstrução se aproxima do sinal original; o resultado não deve ser generalizado para qualquer gravação ou ruído.",
       12: "Avançando para duas dimensões, uma imagem em escala de cinza nada mais é do que uma matriz de intensidades de luminosidade A. Como estendemos a formulação de Fourier para matrizes? Pela propriedade de separabilidade linear. A Transformada Discreta de Fourier Bidimensional pode ser expressa elegantemente como a multiplicação da matriz de imagem A pela matriz de Fourier F_M à esquerda e pela transposta F_N^T à direita. Isso equivale matematicamente a aplicar a FFT 1D ao longo de cada uma das linhas da matriz e, sucessivamente, aplicar a FFT 1D ao longo de cada uma das colunas. As baixas frequências espaciais correspondem a transições suaves de cor e áreas homogêneas de fundo; já as altas frequências codificam contornos abruptos, arestas, detalhes finos e ruídos pontuais.",
-      13: "No script 03_image_2dfft.py, exploramos a atenuação de artefatos visuais. Ao aplicarmos a função fftshift, concentramos toda a energia estrutural da imagem no centro da matriz espectral. Quando inspecionamos o mapa logarítmico de magnitudes, percebemos que a vasta maioria dos coeficientes periféricos de alta frequência possui magnitude próxima de zero. Ao aplicarmos uma máscara circular passa-baixa, eliminamos integralmente as ondulações espaciais ruidosas mantendo preservadas as estruturas visuais principais. Além da filtragem, reside aqui a base da compressão de imagens: se 90% dos coeficientes matriciais de Fourier são nulos ou descartáveis sem que o olho humano note degradação substancial, precisamos armazenar ou transmitir apenas os 10% restantes, reduzindo drasticamente o volume de dados do arquivo.",
-      14: "Quando avançamos para o vídeo digital, estamos lidando com matrizes 2D empilhadas ao longo do eixo temporal. Transmitir trinta quadros brutos em resolução 4K por segundo saturaria qualquer infraestrutura de rede do planeta. Padrões globais como JPEG, MPEG e o codec H.264/H.265 utilizam a Transformada Discreta de Cosseno — que é uma prima direta da FFT operando no campo real — para compactar blocos de 8 por 8 pixels. Além disso, a FFT desempenha um papel fulcral na estimativa de movimento: pelo Teorema da Convolução, a correlação cruzada entre dois quadros sucessivos para calcular vetores de deslocamento, que custaria O(N^2) operações espaciais diretas, é realizada em O(N log N) calculando o produto ponto a ponto no domínio de Fourier. É a Álgebra Linear viabilizando o streaming contemporâneo.",
+      13: "No script 03_image_2dfft.py, separamos duas operações. A máscara circular passa-baixa realiza filtragem espacial; uma máscara de magnitude realiza compressão. O programa informa o percentual de coeficientes mantidos e o erro relativo da reconstrução, pois esses valores dependem da imagem e do limiar escolhido.",
+      14: "Em vídeo digital, quadros podem ser analisados como matrizes empilhadas no tempo. Este repositório não implementa um codec de vídeo. JPEG e alguns padrões de vídeo usam variantes da DCT, que é distinta da FFT. A correlação via FFT é uma técnica possível para comparar imagens, mas a escolha depende do algoritmo e do codec.",
       15: "(Estevão): Para sintetizar o que vimos, a Transformada Rápida de Fourier não é uma mera conveniência numérica ou fórmula isolada; trata-se de um monumento da Álgebra Linear aplicada. Ela exemplifica com perfeição como a compreensão geométrica das transformações ortogonais e a manipulação da estrutura matricial de Vandermonde podem contornar barreiras computacionais que pareciam intransponíveis. (Francisco): Sem a redução de complexidade assintótica proporcionada pela fatoração de Cooley-Tukey, tecnologias fundamentais da nossa rotina seriam inviáveis. A modulação OFDM presente em todas as conexões Wi-Fi e redes móveis celulares realiza milhões de FFTs e IFFTs por segundo diretamente no silício dos roteadores e smartphones para multiplexar canais ortogonais de rádio. (Jasmine): Na medicina, as imagens geradas por uma máquina de ressonância magnética capturam originalmente dados de eco nuclear no chamado 'espaço k', que nada mais é do que o domínio espectral de Fourier. A imagem anatômica tridimensional que o médico analisa é obtida aplicando a transformada inversa matricial sobre esses dados brutos.",
       16: "Em atendimento rigoroso às diretrizes estipuladas para este seminário, todos os algoritmos, provas matriciais, rotinas de benchmark e pipelines de processamento de áudio e imagem foram implementados por nós em Python e estão abertamente disponíveis no repositório GitHub exibido na tela. Os scripts são totalmente reprodutíveis, utilizam apenas bibliotecas numéricas elementares para manipulação matricial e contam com documentação detalhada no arquivo de relatório. Convidamos todos a clonarem o código e realizarem seus próprios experimentos com filtragem de frequências.",
       17: "(Estevão): Encerramos aqui a exposição formal do nosso trabalho. Agradecemos imensamente a atenção de todos e estamos agora à inteira disposição do professor e da turma para responder a quaisquer perguntas, detalhar passagens algébricas da fatoração ou demonstrar a execução ao vivo dos códigos no repositório. Muito obrigado."

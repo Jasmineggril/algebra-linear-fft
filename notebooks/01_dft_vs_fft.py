@@ -1,6 +1,10 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+from pathlib import Path
+
+RESULTADOS = Path(__file__).resolve().parent.parent / 'resultados'
+RESULTADOS.mkdir(exist_ok=True)
 
 # 1. DFT puramente Matricial: X = F_N * x  (Complexidade O(N^2))
 def dft_matrix(x):
@@ -14,6 +18,7 @@ def dft_matrix(x):
 # 2. FFT de Cooley-Tukey Recursiva (Complexidade O(N log N))
 # Decompõe a matriz em blocos par e ímpar via álgebra linear
 def fft_cooley_tukey(x):
+    x = np.asarray(x, dtype=complex)
     N = len(x)
     if N <= 1:
         return x
@@ -29,7 +34,15 @@ def fft_cooley_tukey(x):
         X_even - twiddle * X_odd
     ])
 
-# 3. Benchmark de Desempenho
+# 3. Validação numérica contra a implementação do NumPy
+teste = np.random.default_rng(42).normal(size=32) + 1j * np.random.default_rng(43).normal(size=32)
+resultado_cooley_tukey = fft_cooley_tukey(teste)
+resultado_numpy = np.fft.fft(teste)
+if not np.allclose(resultado_cooley_tukey, resultado_numpy):
+    raise AssertionError('A implementação Cooley-Tukey diverge de numpy.fft.fft')
+print('Validação Cooley-Tukey vs numpy.fft.fft: np.allclose=True')
+
+# 4. Benchmark de Desempenho
 tamanhos = [2**k for k in range(4, 12)] # de 16 a 2048 elementos
 tempos_dft = []
 tempos_fft = []
@@ -56,5 +69,5 @@ plt.ylabel('Tempo de Execução (segundos)')
 plt.title('Impacto da Fatoração Matricial: DFT vs FFT')
 plt.grid(True)
 plt.legend()
-plt.savefig('benchmark_dft_vs_fft.png')
-plt.show()
+plt.savefig(RESULTADOS / 'benchmark_dft_vs_fft.png', dpi=150)
+plt.close()
